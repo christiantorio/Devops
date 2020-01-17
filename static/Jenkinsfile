@@ -1,0 +1,12 @@
+pipeline {
+  agent any
+  stages {
+    stage('Upload to AWS') {
+      steps {
+        withAWS(credentials:'Username:AKIAYHSUC5QGM4F7RDV2', region:'us-west-2'){
+        s3Upload(file:'index.html', bucket:'arn:aws:s3:::jenkins-udacity-pipeline')
+      }
+    }
+  }
+}
+}
