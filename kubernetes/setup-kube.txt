@@ -1,0 +1,88 @@
+#steps to setup kubernetes on aws ec2 [this is done on control]
+
+#step 1- become root
+sudo -i
+
+#step2 - update/upgrade system
+apt-get update && apt-get upgrade -y
+
+#step3 - install docker
+apt-get install -y docker.io
+
+#step4 - add repo for kubernetes
+vi /etc/apt/sources.list.d/kubernetes.list
+
+deb  http://apt.kubernetes.io/  kubernetes-xenial  main
+
+#step5 - add GPG key
+
+curl -s \
+https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+| apt-key add 
+
+#step6 - update repo 
+apt-get update
+
+#step7 - install kube components
+
+apt-get install -y \
+kubeadm=1.18.1-00 kubelet=1.18.1-00 kubectl=1.18.1-00
+
+#step8 - exclude/hold kube components
+
+apt-mark hold kubelet kubeadm kubectl 
+
+#step9 - determine pod network for Container Networking Interface (CNI). Confirm IPV4POOL_CIDR to match kubeadm init 
+
+wget https://docs.projectcalico.org/manifests/calico.yaml
+less calico.yaml
+
+# The default IPv4 pool to create on startup if none exists. Pod IPs will be
+# chosen from this range. Changing this value after installation will have
+# no effect. This should fall within`--cluster-cidr`.
+   - name: CALICO_IPV4POOL_CIDR
+     value:"192.168.0.0/16"
+
+#step10 - check control node IP to be used to edit /etc/hosts
+
+ip addr show
+
+#step11 - edit hosts file
+
+vi /etc/hosts
+
+#step12 - create config file for cluster
+
+vi kubeadm-config.yaml
+
+apiVersion: kubeadm.k8s.io/v1beta2
+kind: ClusterConfiguration
+kubernetesVersion: 1.18.1               #<-- Use the word stable for newest version
+controlPlaneEndpoint: "k8smaster:6443"  #<-- Use the node alias not the IP
+networking:
+   podSubnet: 192.168.0.0/16            #<-- Match the IP range from the Calico config file
+
+
+#step13 - init master
+
+kubeadm init --config kubeadm-config.yaml --upload-certs \
+| tee kubeadm-init.out      # Save output for future review
+
+#step14 - follow instructions to allow non-root user admin level access
+
+ubuntu@172-31-4-84: ̃# exit
+logout
+
+ubuntu@172-31-4-84: ̃$ mkdir -p $HOME/.kube
+ubuntu@172-31-4-84: ̃$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+ubuntu@172-31-4-84: ̃$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+ubuntu@172-31-4-84: ̃$ less .kube/config
+
+#step15 - enable bash auto-completion
+
+ubuntu@172-31-4-84: ̃$ sudo apt-get install bash-completion -y
+<exit and log back in>
+
+ubuntu@172-31-4-84: ̃$ source <(kubectl completion bash)
+ubuntu@172-31-4-84: ̃$ echo "source <(kubectl completion bash)" >>  ̃/.bashrc
+
