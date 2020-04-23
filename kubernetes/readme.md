@@ -1,0 +1,1 @@
+Various files on how to setup with notes on troubleshooting
