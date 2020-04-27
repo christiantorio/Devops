@@ -1,0 +1,4 @@
+Apply the network plugin configuration to your cluster. Remember to copy the file to the current, non-root user directoryfirst.
+
+sudo cp /root/calico.yaml 
+kubectl apply -f calico.yaml
