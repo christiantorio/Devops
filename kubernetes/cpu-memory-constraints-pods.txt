@@ -1,0 +1,27 @@
+#to get logs of items
+
+kubectl get pods
+kubectl logs <pod-name>
+
+#memory-cpu constraints
+
+imagePullPolicy: Always
+  name: hog4resources:                    # Edit to remove {}
+  resources:
+    limits:                     # Add these 4 lines
+      cpu: "1"
+      memory:"4Gi"
+    requests:
+      cpu: "1"
+      memory:"2500Mi"
+    - -cpus
+    - "2"
+    - mem-total
+    - "950Mi"
+    - mem-alloc-size
+    - "100Mi"
+    - -mem-alloc-sleep
+    - "1s"
+  terminationMessagePath: /dev/termination-log
+  terminationMessagePolicy: File
+
