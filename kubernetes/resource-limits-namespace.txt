@@ -1,0 +1,56 @@
+# to create a namespace
+
+kubectl create namespace low-usage-limit
+
+# to get all namespaces
+
+kubectl get namespace
+
+# creating a yaml file which limits cpu and memory usage
+
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: low-resource-range
+spec:
+  limits:
+  - default:
+      cpu: 1
+      memory: 500Mi
+    defaultRequest:
+      cpu: 0.5
+      memory: 100Mi
+    type: Container
+
+#creating object to a new namespace
+
+kubectl --namespace=low-usage-limit  \
+  create -f low-resource-range.yaml
+
+#creating a new deployment in a namespace
+
+kubectl -n low-usage-limit \
+  create deployment limited-hog --image vish/stress
+
+#get pod within a namespace
+
+kubectl -n low-usage-limit get pods
+
+# look at details of pod from a specific namespace
+
+kubectl -n low-usage-limit \
+  get pod limited-hog-d9d756c45-cgx96 -o yaml
+
+#add a pod spec to a specific namespace
+
+  labels:
+    app: hog
+  name: hog
+  namespace: low-usage-limit      #<<--- Add this line, delete following
+  selfLink: /apis/apps/v1/namespaces/default/deployments/hog7spec:
+
+
+#delete deployment from namespace
+
+kubectl -n low-usage-limit delete deployment hog
+kubectl delete deployment hog
