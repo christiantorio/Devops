@@ -1,0 +1,65 @@
+#to view kubectl config file
+
+less ˜/.kube/config
+
+#exporting keys
+
+export client=$(grep client-cert ˜/.kube/config |cut -d" " -f 6)
+echo $client
+
+export key=$(grep client-key-data ˜/.kube/config |cut -d " " -f 6)
+echo $key
+
+export auth=$(grep certificate-authority-data ˜/.kube/config |cut -d " " -f 6)
+echo $auth
+
+#encode keys
+
+echo $client | base64 -d - > ./client.pem
+echo $key | base64 -d - > ./client-key.pem
+echo $auth | base64 -d - > ./ca.pem
+
+#pull apir server url from config file
+
+kubectl config view |grep server
+
+#use curl command and encoded keys to connect to API server
+
+curl --cert ./client.pem \
+--key ./client-key.pem \
+--cacert ./ca.pem \
+https://k8smaster:6443/api/v1/pods
+
+
+#create json file to create new pod 
+
+vi curlpod.json
+
+{
+    "kind": "Pod",
+    "apiVersion": "v1",
+    "metadata":{
+        "name": "curlpod",
+        "namespace": "default",
+        "labels": {
+            name": "examplepod"
+            }
+        },
+        "spec": {
+            "containers": [{
+                "name": "nginx",
+                "image": "nginx",
+                "ports": [{"containerPort": 80}]
+             }]
+        }
+}
+
+
+#create pod using XPOST api call
+
+curl --cert ./client.pem \
+--key ./client-key.pem --cacert ./ca.pem \
+https://k8smaster:6443/api/v1/namespaces/default/pods \
+-XPOST -H'Content-Type: application/json' \
+-d@curlpod.json
+
