@@ -1,0 +1,13 @@
+#start proxy while setting api prefix 
+
+kubectl proxy --api-prefix=/ &
+
+# curl command to proxy. note to point toward UP and port shown by proxy
+# then make API call to retrieve namespaces
+
+curl http://127.0.0.1:8001/api/
+curl http://127.0.0.1:8001/api/v1/namespaces
+
+# make sure to kill process once default_if_none
+
+kill 22500

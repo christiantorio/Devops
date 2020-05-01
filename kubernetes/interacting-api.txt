@@ -1,0 +1,74 @@
+#get overall cluster configs
+
+kubectl config view
+
+apiVersion: v1
+clusters:
+- cluster:
+    certificate-authority-data: DATA+OMITTED
+    server: https://k8smaster:6443
+  name: kubernetes
+contexts:
+- context:
+    cluster: kubernetes
+    user: kubernetes-admin
+  name: kubernetes-admin@kubernetes
+current-context: kubernetes-admin@kubernetes
+kind: Config
+preferences: {}
+users:
+- name: kubernetes-admin
+  user:
+    client-certificate-data: REDACTED
+    client-key-data: REDACTED
+
+
+#find bearer token 
+
+kubectl get secrets --all-namespaces
+
+NAMESPACE         NAME                                             TYPE                                  DATA   AGE
+default           default-token-m8wb5                              kubernetes.io/service-account-token   3      7d23h
+kube-node-lease   default-token-d2rsz                              kubernetes.io/service-account-token   3      7d23h
+
+kubectl get secrets
+NAME                  TYPE                                  DATA   AGE
+default-token-m8wb5   kubernetes.io/service-account-token   3      7d23h
+
+kubectl describe secret default-token-m8wb5
+
+Name:         default-token-m8wb5
+Namespace:    default
+Labels:       <none>
+Annotations:  kubernetes.io/service-account.name: default
+              kubernetes.io/service-account.uid: d4cbf3a3-20fd-4966-b8c1-f4e07dcc8857
+
+Type:  kubernetes.io/service-account-token
+
+Data
+====
+ca.crt:     1025 bytes
+namespace:  7 bytes
+token:      eyJhbGciOiJSUzI1NiIsImtpZC
+
+#export token
+
+export token=<token>
+
+#api commands
+
+curl https://k8smaster:6443/apis \
+  --header "Authorization: Bearer $token" -k
+
+curl https://k8smaster:6443/api/v1 \
+  --header "Authorization: Bearer $token" -k
+
+
+#making use of included certs to use api. certs are automatically made to a pod here: /var/run/secrets/kubernetes.io/serviceaccount/
+
+kubectl run -i -t busybox --image=busybox \--restart=Never
+
+# ls /var/run/secrets/kubernetes.io/serviceaccount/
+ca.crt namespace token
+# exit
+
