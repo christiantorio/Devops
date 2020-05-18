@@ -1,0 +1,44 @@
+{% comment %} While most API objects are deployed such that they continue to be available there are
+some which we may want to run aparticular number of times called aJob, and others on a 
+regular basis called a CronJob
+A CronJob creates a watch loop which will create a batch job on your behalf when the 
+time becomes true. We Will use our existing Job ﬁle to start. {% endcomment %}
+
+#creating a job
+
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sleepy
+spec:
+  completions: 5 #how many times you want the job to be completed
+  parallelism: 2 #two pods at a time will be deployed
+  activeDeadlineSeconds: 15 #job and all pods will end one it runs for 15 seconds
+  template:
+    spec:
+      containers:
+      - name: resting
+        image: busybox
+        command: ["/bin/sleep"]
+        args: ["5"]
+      restartPolicy: Never
+
+
+##Cron job
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: sleepy
+spec:
+  schedule: "/2 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          activeDeadlineSeconds: 10W
+          containers:
+          - name: resting
+              image: busybox
+              command: ["/bin/sleep"]
+              args: ["30"]
+          restartPolicy: Never
