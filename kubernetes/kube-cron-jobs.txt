@@ -42,3 +42,16 @@ spec:
               command: ["/bin/sleep"]
               args: ["30"]
           restartPolicy: Never
+
+
+#view jobs
+kubectl get job
+kubectl get jobs.batch
+kubectl get cronjobs.batch
+
+#delte jobs
+kubectl delete jobs.batch <job name>
+kubectl delete cronjobs.batch <job name>
+
+#view configuration of job 
+kubectl get jobs.batch <job name> -o yaml
