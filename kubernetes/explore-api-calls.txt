@@ -1,0 +1,37 @@
+# use strace to view what command is doing on my behalf
+
+sudo apt-get install -y strace
+
+#using strace to get endpoints
+
+strace kubectl get endpoints
+
+#good location to look at various configs for kubectl
+
+cd /home/<user>/.kube/cache/discovery/k8smaster_6443
+
+# for each object, or kind:, you can view the verbs or actions for that
+object, such as create seen in the following example. Note the prompt has been truncated for the command to fit on one
+line. Some are HTTP verbs, such as GET, others are product specific options, not standard HTTP verbs.
+
+python3 -m json.tool v1/serverresources.json
+
+#Some of the objects have shortNames, which makes using them on the command line much easier. Locate the
+shortName for endpoints
+
+python3 -m json.tool v1/serverresources.json | less....
+
+2 {
+3 "kind": "Endpoints",
+4 "name": "endpoints",
+V 2020-04-20 © Copyright the Linux Foundation 2020. All rights reserved.
+5.1. LABS 37
+5 "namespaced": true,
+6 "shortNames": [
+7 "ep"
+8 ],
+9 "singularName": "",
+10 "verbs": [
+11 "create",
+12 "delete",
+13 ....

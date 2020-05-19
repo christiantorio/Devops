@@ -1,0 +1,61 @@
+## steps for control nodes 
+
+#step 1- become root
+sudo -i
+
+#step2 - update/upgrade system
+apt-get update && apt-get upgrade -y
+
+#step 3 install docker 
+
+apt-get install -y docker.io
+
+vi /etc/apt/sources.list.d/kubernetes.list
+deb  http://apt.kubernetes.io/  kubernetes-xenial  main
+
+#step 4
+
+curl -s \
+  https://packages.cloud.google.com/apt/doc/apt-key.gpg \
+  | apt-key add -
+
+#step 5 udpate system and install kubernetes
+
+apt-get update
+apt-get install -y \kubeadm=1.18.1-00 kubelet=1.18.1-00 kubectl=1.18.1-00
+apt-mark hold kubeadm kubelet kubectl
+
+#step 6 find IP address of control plane
+
+ip addr show ens4 | grep inet
+
+#step 8 copy/paste join command from master. command works for 2 hours only. creation of new token will be below (if needed)
+
+sudo kubeadm token lis
+
+if new token needed:
+
+sudo kubeadm token create
+
+#step 9 create Token CA Cert hash created from master to ensure node joins cluster. run this on master or where copy of CA file
+
+openssl x509 -pubkey \
+-in /etc/kubernetes/pki/ca.crt | openssl rsa \
+-pubin -outform der 2>/dev/null | openssl dgst \
+-sha256 -hex | sed's/ˆ.* //'
+
+#step 10 - edit hosts file 
+
+vim /etc/hosts
+
+10.128.0.3 k8smaster    #<-- Add this line
+127.0.0.1 localhost
+
+#step 11 use token and hasd to join cluster from worker node. Use the privateIP address of the master server and port 644
+
+kubeadm join \
+--token 27eee4.6e66ff60318da929 \
+k8smaster:6443 \
+--discovery-token-ca-cert-hash \
+sha256:6d541678b05652e1fa5d43908e75e67376e994c3483d6683f2a18673e5d2a1b0
+

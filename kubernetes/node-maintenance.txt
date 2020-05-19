@@ -1,0 +1,26 @@
+# kubectl drain is used to evict all pods from a node before performing a maintenance on the node
+# safe evictions allow pod's containers to gracefully terminate
+
+#check which nodes need to be drained
+
+kubectl get nodes
+
+#drain nodes
+
+kubectl drain <node>
+kubectl describe node |grep -i taint
+
+#some errors may occur - can use ignore-daemonsets
+
+kubectl drain <node> --ignore-daemonsets
+
+# not all pods will be gone as daemonsets will remain
+
+kubectl drain <node> --ignore-daemonsets --delete-local-data
+
+#update node taint so scheduler will use node again
+
+kubectl uncordon <node>
+kubectl describe node |grep -i taint
+
+

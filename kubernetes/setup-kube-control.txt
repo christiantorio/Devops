@@ -73,16 +73,20 @@ kubeadm init --config kubeadm-config.yaml --upload-certs \
 ubuntu@172-31-4-84: ̃# exit
 logout
 
-ubuntu@172-31-4-84: ̃$ mkdir -p $HOME/.kube
-ubuntu@172-31-4-84: ̃$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-ubuntu@172-31-4-84: ̃$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
-ubuntu@172-31-4-84: ̃$ less .kube/config
+mkdir -p $HOME/.kube
+sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+sudo chown $(id -u):$(id -g) $HOME/.kube/config
+less .kube/config
 
 #step15 - enable bash auto-completion
 
-ubuntu@172-31-4-84: ̃$ sudo apt-get install bash-completion -y
+sudo apt-get install bash-completion -y
 <exit and log back in>
 
-ubuntu@172-31-4-84: ̃$ source <(kubectl completion bash)
-ubuntu@172-31-4-84: ̃$ echo "source <(kubectl completion bash)" >>  ̃/.bashrc
+source <(kubectl completion bash)
+echo "source <(kubectl completion bash)" >>  ̃/.bashrc
+
+#step16 - view other values in kubeadm-config.yaml
+
+sudo kubeadm config print init-defaults
 

@@ -1,0 +1,61 @@
+## verifying available nodes on cluster
+
+# step 1 - go to master nodes
+
+kubectl get nodes
+
+# step 2 - verify each nodes
+
+kubectl describe node lfs458-node-1a0a
+
+# step 3  Allow the master server to run non-infrastructure pods.  The master node begins tainted for security and performance reasons.  
+We will allow usage of the node in the training environment, but this step may be skipped in a production environment.  
+Note theminus sign (-)at the end, which is the syntax to remove a taint. 
+
+kubectl describe node | grep -i taint
+
+Taints:node-role.kubernetes.io/master:NoSchedule
+Taints:<none>
+
+kubectl taint nodes \
+--all node-role.kubernetes.io/master-
+
+node/lfs458-node-1a0a untainted
+error: taint "node-role.kubernetes.io/master:" not found
+
+# step 4 - maste node is able to execute any pod that is found there is a new taint. View, then remove the taint if present
+
+kubectl describe node | grep -i taint
+
+Taints:node.kubernetes.io/not-ready:NoSchedule
+Taints:<none>
+
+kubectl taint nodes \
+--all node.kubernetes.io/not-ready-
+
+node/lfs58-node-1a0a untainted
+error: taint "node.kubernetes.io/not-ready:" not found
+
+#step 5 - determine if DNS is calico pods are ready to user
+
+kubectl get pods --all-namespaces
+
+#step 6 - if pods are stuck in container creating - delete them to create new ones
+
+kubectl get pods --all-namespaces
+
+NAMESPACE     NAME                       READY   STATUS            RESTARTS   AGE
+kube-system   coredns-576cbf47c7-rn6v4   0/1     ContainerCreating 0          3s
+kube-system   coredns-576cbf47c7-vq5dz   0/1     ContainerCreating 0          94m
+
+kubectl -n kube-system delete \
+pod coredns-576cbf47c7-vq5dz coredns-576cbf47c7-rn6v4
+
+pod "coredns-576cbf47c7-vq5dz" deleted
+pod "coredns-576cbf47c7-rn6v4" deleted
+
+#step 8 - check if new tunnel instances
+
+ip a
+
+

@@ -1,0 +1,46 @@
+# create new deployment
+
+kubectl create deployment nginx --image=nginx
+
+# look at basic steps
+
+kubectl get events
+
+#output deployment to yaml or json
+
+kubectl get deployment nginx -o yaml > deployment.yaml
+
+# more details with --export
+
+kubectl get deployments nginx --export -o yaml
+kubectl get deployments nginx --export -o json
+
+# create deployment using dry-run
+
+kubectl create deployment two --image=nginx --dry-run=client -o yaml
+
+# expose deployment - name of deployment is what is needed at end
+
+kubectl expose deployment/nginx
+
+# to see the endpoints
+
+kubectl get svc nginx
+kubectl get ep nginx
+
+#great command to see on master the tcmpdump
+
+sudo tcpdump -i tunl0
+
+# scaling up on deployment
+
+kubectl scale deployment nginx --replicas=3
+
+# verifying kube variables
+
+kubectl exec nginx-1423793266-13p69 \
+-- printenv |grep KUBERNETES
+
+#exposing as load balancer
+
+kubectl expose deployment nginx --type=LoadBalance

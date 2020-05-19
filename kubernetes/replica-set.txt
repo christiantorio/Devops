@@ -1,0 +1,32 @@
+#creating a replica set
+
+apiVersion: apps/v1
+kind: ReplicaSet
+metadata:
+   name: rs-one
+spec:
+   replicas: 2
+   selector:
+      matchLabels:
+        system: ReplicaOne
+   template:
+      metadata:
+        labels:
+          system: ReplicaOne
+      spec:
+        containers:
+          - name: nginx
+            image: nginx:1.15.1
+            ports:
+              - containerPort: 80
+
+
+#deleting replicaSet but not the pods
+kubectl delete rs rs-one --cascade=false
+
+#editing a pod to be isolated
+kubectl get pods
+kubectl edit pod rs-one-3c6pb
+
+#viewing pods with label key of system
+kubectl get po -L system

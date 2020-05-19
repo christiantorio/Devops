@@ -1,0 +1,54 @@
+#A DaemonSetis a watch loop object like a Deployment which we have been working with in the rest of the labs. The DaemonSet ensures that when a node is added to a cluster a pods will be created on that node.  A Deploymen twould only ensure aparticular number of pods are created in general, several could be on a single node.  Using a DaemonSet can be helpful to ensure applications are on each node, helpful for things like metrics and logging especially in large clusters where hardwaremay be swapped out often.  Should a node be removed from a cluster the DaemonSet would ensure the Pods are garbagec ollected before removal. Starting with Kubernetes v1.12 the scheduler handles DaemonSet deployment which means we cannow configure certain nodes to not have a particular DaemonSet pods/
+
+#This extra step of automation can be useful for using with products likecephwhere storage is often added or removed, butperhaps among a subset of hardware. They allow for complex deployments when used with declared resources like memory,CPU or volumes.
+
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+   name: ds-one
+spec:
+   selector:
+      matchLabels:
+        system: DaemonSetOne
+   template:
+      metadata:
+        labels:
+          system: DaemonSetOne
+      spec:
+        containers:
+          - name: nginx
+            image: nginx:1.15.1
+            ports:
+              - containerPort: 80
+
+
+#check DaemonSets 
+kubectl get ds
+
+#show image running
+kubectl describe pod ds-one-b1dcv | grep Image:
+
+#will update image when pod is deleted
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: OnDelete
+
+#will roll udpate immediately
+
+  updateStrategy:
+    rollingUpdate:
+      maxUnavailable: 1
+    type: RollingUpdate
+
+#edit conf file to new version with record option
+--record flag to write the command executed in the resource annotation kubernetes.io/change-cause. The recorded change is useful for future introspection. For example, to see the commands executed in each Deployment revision.
+
+kubectl edit ds ds-two --record
+
+#get rollout status
+kubectl rollout history ds ds-two
+
+REVISION        CHANGE-CAUSE
+1                <none>
+2                kubectl edit ds ds-two --record=true
