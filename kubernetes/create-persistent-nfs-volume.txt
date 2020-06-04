@@ -1,0 +1,42 @@
+#insall nfs software on master node
+
+sudo apt-get update && sudo apt-get install -y nfs-kernel-server
+
+#make and populate a directory to be shared
+
+$ sudo mkdir /opt/sfw
+$ sudo chmod 1777 /opt/sfw/
+$ sudo bash -c 'echo software > /opt/sfw/hello.txt'
+
+#Edit the NFS server file to share out the newly created directory
+
+$ sudo vim /etc/exports
+
+/opt/sfw/ *(rw,sync,no_root_squash,subtree_check)
+
+
+#Cause /etc/exports to be re-read:
+$ sudo exportfs -ra
+
+#Test by mounting the resource from your second node.
+$ sudo apt-get -y install nfs-common
+$ showmount -e k8smaster
+$ sudo mount k8smaster:/opt/sfw /mnt
+$ ls -l /mnt
+
+#yaml file for pv
+
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: pvvol-1
+spec:
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteMany
+  persistentVolumeReclaimPolicy: Retain
+  nfs:
+    path: /opt/sfw
+    server:  ip-172-31-4-84 #<-- Edit to match master node
+    readOnly: false
