@@ -1,0 +1,35 @@
+#yaml to create resource ResourceQuota
+
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: storagequota
+spec:
+  hard:
+    persistentvolumeclaims: "10"
+    requests.storage: "500Mi"
+
+#creating a file 
+
+$ sudo dd if=/dev/zero of=/opt/sfw/bigfile bs=1M count=300
+$ du -h /opt/
+
+#changing defailt storage policy in yaml
+
+ ....
+  path: /opt/sfw
+  server: k8smaster
+persistentVolumeReclaimPolicy: Retain, Delte, Recycle
+status:
+  phase: Released
+
+#using kubectl patch to change retention policy
+
+$ kubectl patch pv pvvol-1 -p '{"spec":{"persistentVolumeReclaimPolicy":"Delete"}}'
+
+#increasing resource ResourceQuota
+
+$ kubectl -n small edit resourcequota
+
+# note: when adujusting resourcequota to recycle. it will only take effect if resource limit is in effect
+
