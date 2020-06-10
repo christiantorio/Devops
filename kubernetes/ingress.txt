@@ -1,0 +1,47 @@
+# If you have a large number of services to expose outside of the cluster, or to expose a low-number port on the host node
+you can deploy an ingress controller or a service mesh. While nginx and GCE have controllers officially supported by
+Kubernetes.io, the Traefik ingress controller is easier to install.
+
+#expose server as a nodeport using port 80
+
+$ kubectl expose deployment secondapp --type=NodePort --port=80
+
+#As we have RBAC configured we need to make sure the controller will run and be able to work with all necessary ports,
+endpoints and resources. Create a YAML file to declare a clusterrole and a clusterrolebinding
+
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-ingress-controller
+rules:
+  - apiGroups:
+      - ""
+    resources:
+      - services
+      - endpoints
+      - secrets
+    verbs:
+      - get
+      - list
+      - watch
+  - apiGroups:
+      - extensions
+    resources:
+      - ingresses
+    verbs:
+      - get
+      - list
+      - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: traefik-ingress-controller
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: traefik-ingress-controller
+  subjects:
+  - kind: ServiceAccount
+    name: traefik-ingress-controller
+    namespace: kube-system
