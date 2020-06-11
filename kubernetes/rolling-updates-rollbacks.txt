@@ -1,0 +1,26 @@
+#One of the advantages of micro-services is the ability to replace and upgrade a container while continuing to respond to clientrequests.  We will use the OnDelete setting that upgrades a container when the predecessor is deleted, then the use the RollingUpdate feature as well, which begins a rolling update immediately.
+
+#display current updateStrategy
+kubectl get ds ds-one -o yaml \| grep -A 3 Strategy
+
+#edit object 
+kubectl edit ds ds-one
+
+#to update the ds to a newer version
+kubectl set image ds ds-one nginx=nginx:1.16.1-alpine
+
+#delete pod 
+kubectl delete po <pod>
+
+#deleting pod will create a ds with new version due to rolling update 
+
+#view history of ds
+kubectl rollout history ds ds-one
+
+#going to each revision will show information about what was done
+kubectl rollout history ds ds-one --revision=1
+
+#to change ds back to an earlier version
+kubectl rollout undo ds ds-one --to-revision=1
+
+....name: ds-two....type: RollingUpdate

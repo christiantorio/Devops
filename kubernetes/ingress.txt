@@ -45,3 +45,43 @@ roleRef:
   - kind: ServiceAccount
     name: traefik-ingress-controller
     namespace: kube-system
+
+
+# create role and binding 
+
+$ kubectl create -f ingress.rbac.yaml
+
+#create controller
+
+$ find . -name traefik-ds.yaml
+$ cp ./LFS458/SOLUTIONS/s_10/traefik-ds.yaml .
+
+#create ingress controller
+
+$ kubectl create -f traefik-ds.yaml
+
+#passing rules to new controller
+
+apiVersion: networking.k8s.io/v1beta1
+kind: Ingress
+metadata:
+  name: ingress-test
+  annotations:
+    kubernetes.io/ingress.class: traefik
+spec:
+  rules:
+  - host: www.example.com
+    http:
+      paths:
+      - backend:
+          serviceName: secondapp
+          servicePort: 80
+        path: /
+
+# edit ingress
+
+$ kubectl edit ingress ingress-test
+
+#searching for labels in use by deployment
+
+$ kubectl get deployments secondapp -o yaml |grep ' labels' -A2

@@ -1,0 +1,9 @@
+#when giving a deployment a label. quick way to view
+
+$ kubectl -n accounting get deploy --show-labels 
+
+#delete deployment using label
+$ kubectl -n accounting delete deploy \ -l system=secondary
+
+#remove label from node
+$ kubectl label node lfs458-worker system

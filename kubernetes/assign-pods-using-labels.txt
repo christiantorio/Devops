@@ -1,0 +1,50 @@
+#While allowing the system to distribute Pods on your behalf is typically the best route, you may want to determine which nodes a Pod will use. For example you may have particular hardware requirements to meet for the workload. You may want to assign VIP Pods to new, faster hardware and everyone else to older hardware.
+
+#view current labels and taints for nodes
+
+$ kubectl describe nodes |grep -A5 -i label
+$ kubectl describe nodes |grep -i taint
+
+
+#assign master node to VIP or any label 
+
+$ kubectl label nodes lfs458-node-1a0a status=vip
+$ kubectl label nodes lfs458-worker status=other
+
+#verify 
+
+$ kubectl get nodes --show-labels
+
+#spawning four busybox containers which sleep 
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: vip
+spec:
+  containers:
+  - name: vip1
+    image: busybox
+    args:
+    - sleep
+    - "1000000"
+  - name: vip2
+    image: busybox
+    args:
+    - sleep
+    - "1000000"
+  - name: vip3
+    image: busybox
+    args:
+    - sleep
+    - "1000000"
+  - name: vip4
+    image: busybox
+    args:
+    - sleep
+    - "1000000"
+  nodeSelector:
+    status: vip
+
+
+

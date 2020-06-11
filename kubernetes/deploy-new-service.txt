@@ -1,0 +1,85 @@
+Services (also called microservices) are objects which declare a policy to access a logical set of Pods. 
+
+They are typically assigned with labels to allow persistent access to a resource, when front or back end containers are terminated and replaced.
+
+Native applications can use the Endpoints API for access. 
+
+Non-native applications can use a Virtual IP-based bridge to access back end pods.
+
+ServiceTypes Typecould be:
+
+•ClusterIPdefault - exposes on a cluster-internal IP. Only reachable within cluster
+•NodePortExposes node IP at a static port. A ClusterIP is also automatically created.•LoadBalancer Exposes service externally using cloud providers load balancer.NodePortandClusterIPauto-matically created.
+•ExternalName Maps service to contents of externalName using a CNAME record.
+
+We use services as part of decoupling such that any agent or object can be replaced without interruption to accessfrom client to back end application.
+
+
+apiVersion: apps/v1 
+# Determines YAML versioned schema.
+kind: Deployment 
+# Describes the resource defined in this file. 
+metadata: 
+  name: nginx-one 
+  labels: 
+    system: secondary 
+# Required string which defines object within namespace. 
+  namespace: accounting 
+# Existing namespace resource will be deployed into. 
+spec: 
+  selector: 
+    matchLabels: 
+      system: secondary 
+# Declaration of the label for the deployment to manage 
+  replicas: 2 
+# How many Pods of following containers to deploy 
+  template: 2
+    metadata: 
+      labels: 
+        system: secondary 
+# Some string meaningful to users, not cluster. Keys 
+# must be unique for each object. Allows for mapping 2
+# to customer needs. 2
+   spec: 
+     containers:
+# Array of objects describing containerized application with a Pod. 
+# Referenced with shorthand spec.template.spec.containers 
+     - image: nginx:1.16.1 
+# The Docker image to deploy 
+       imagePullPolicy: Always 
+       name: nginx 34 
+# Unique name for each container, use local or Docker repo image 
+       ports: 36 
+       - containerPort: 8080 
+         protocol: TCP 3
+# Optional resources this container may need to function. 
+      nodeSelector: 
+         system: secondOne 
+# One method of node affinity
+
+#View the existing labels on the nodes in the cluster
+$ kubectl get nodes --show-labels
+
+#reminder on how to create namespace
+$ kubectl create ns accounting
+
+#View the node each has been assigned to (or not) and the reason
+
+$ kubectl -n accounting describe pod nginx-one-74dd9d578d-fcpmv
+
+#show labels of nodes
+$ kubectl get nodes --show-labels
+
+#label secondary node
+
+$ kubectl label node lfs458-worker system=secondOne
+
+#View Pods by the label we set in the YAML ﬁle
+
+$ kubectl get pods -l system=secondary --all-namespaces
+
+#exposing deployment. in yaml its specified as 8080 but could be changed to 80
+$ kubectl -n accounting expose deployment nginx-one
+
+#view exposed Endpoints
+$ kubectl -n accounting get ep nginx-one
