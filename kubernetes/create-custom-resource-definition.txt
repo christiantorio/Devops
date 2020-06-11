@@ -1,0 +1,35 @@
+#The use of CustomResourceDefinitions (CRD), has become a common manner to deploy new objects and operators. Creation of a new operator is beyond the scope of this course, basically it is a watch-loop comparing a spec to the current status, and making changes until the states match.
+
+#view existing CRDs 
+
+$ kubectl get crd --all-namespaces
+
+
+apiVersion: apiextensions.k8s.io/v1beta1
+kind: CustomResourceDefinition
+  metadata:
+    name: crontabs.training.lfs458.com
+    # This name must match names below.
+    # <plural>.<group> syntax
+spec:
+  scope: Cluster  #Could also be Namespaced
+  group: training.lfs458.com
+  version: v1
+  names:
+    kind: CronTab #Typically CamelCased for resource manifest
+    plural: crontabs #Shown in URL
+    singular: crontab #Short name for CLI alias
+    shortNames:
+    - ct #CLI short name
+
+
+apiVersion: "training.lfs458.com/v1"
+   # This is from the group and version of new CRD
+kind: CronTab
+   # The kind from the new CRD
+metadata:
+  name: new-cron-object
+spec:
+  cronSpec: "*/5 * * * *"
+  image: some-cron-image
+  #Does not exist

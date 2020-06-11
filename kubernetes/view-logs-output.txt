@@ -1,0 +1,11 @@
+#Container standard out can be seen via the kubectl logs command. If there is no standard out, you would not see any output. In addition, the logs would be destroyed if the container is destroyed.
+
+#view current pods
+
+$ kubectl get po --all-namespaces
+
+#view logs with various infrastructure pods
+
+$ kubectl -n kube-system logs <Tab><Tab>
+$ kubectl -n kube-system logs kube-apiserver-lfs458-node-1a0a
+

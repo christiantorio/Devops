@@ -1,0 +1,38 @@
+# In addition to various logs files and command output, you can use journalctl to view logs from the node perspective. We will view common locations of log files, then a command to view container logs. There are other logging options, such as the use of a sidecar container dedicated to loading the logs of another container in a pod.
+
+#If using a systemd.based Kubernetes cluster, view the node level logs for kubelet, the local Kubernetes agent. Each node will have different contents as this is node specific
+
+$ journalctl -u kubelet |less
+
+# Major Kubernetes processes now run in containers. You can view them from the container or the pod perspective. Use the find command to locate the kube-apiserver log. 
+
+$ sudo find / -name "*apiserver*log"
+
+$ sudo diff /var/log/containers/kube-apiserver-u16-
+12-1-dcb8_kube-system_kube-apiserver-eddae7079382cd382cd55f8f46b192565dd16b68
+58206039d49b1ad4693c2a10.log /var/log/containers/kube-apiserver-u16-12-1-
+dcb8_kube-system_kube-apiserver-d00a48877af4ed4c7f8eedf2c7805c77cfabb31fcb453
+f7d89ffa52fc6ea5f36.log
+
+#look at log files
+
+$ sudo less /var/log/containers/kube-apiserver-u16-
+12-1-dcb8_kube-system_kube-apiserver-d00a48877af4ed4c7f8eedf2c7805c77cfabb31f
+cb453f7d89ffa52fc6ea5f36.log
+
+If not on a Kubernetes cluster using systemd which collects logs via journalctl you can view the text files on the master node.
+(a) /var/log/kube-apiserver.log
+Responsible for serving the API
+(b) /var/log/kube-scheduler.log
+Responsible for making scheduling decisions
+(c) /var/log/kube-controller-manager.log
+Controller that manages replication controllers
+(d) /var/log/containers 
+Various container logs
+(e) /var/log/pods/
+Log files for current /var/log/pods/
+(f) /var/log/kubelet.log
+Responsible for running containers on the node
+(g) /var/log/kube-proxy.log
+Responsible for service load balancing
+
