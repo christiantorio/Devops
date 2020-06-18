@@ -1,0 +1,80 @@
+#the flow of access to a cluster begins with TLS connectivity, then authentication followed by authorization, finally an admission control plug-in allows advanced features prior to the request being fulfilled. The use of Initializers allows the flexibility of a shell-script to dynamically modify the request. As security is an important, ongoing concern, there may be multiple configurations used depending on the needs of the cluster
+
+#While one can have multiple cluster root Certificate Authorities (CA) by default each cluster uses their own, intended for intracluster communication. The CA certificate bundle is distributed to each node and as a secret to default service accounts. The
+kubelet is a local agent which ensures local containers are running and healthy.
+
+#View the kubelet on both the master and secondary nodes. The kube-apiserver also shows security information such as certificates and authorization mode. As kubelet is a systemd service we will start looking at that output
+
+$ systemctl status kubelet.service
+
+Look at the status output. Follow the CGroup and kubelet information, which is a long line where configuration settings are drawn from, to find where the configuration file can be found.
+CGroup: /system.slice/kubelet.service
+|--19523 /usr/bin/kubelet .... --config=/var/lib/kubelet/config.yaml ..
+
+#Take a look at the settings in the /var/lib/kubelet/config.yaml file. Among other information we can see the /etc/kubernetes/pki/ directory is used for accessing the kube-apiserver. Near the end of the output it also sets the directory to find other pod spec files.
+
+$ sudo less /var/lib/kubelet/config.yaml
+
+#/var/lib/kubelet/config.yaml
+
+1 address: 0.0.0.0
+2 apiVersion: kubelet.config.k8s.io/v1beta1
+3 authentication:
+4 anonymous:
+5 enabled: false
+6
+7 <output_omitted>
+8
+9 serializeImagePulls: true
+10 staticPodPath: /etc/kubernetes/manifests
+11 streamingConnectionIdleTimeout: 4h0m0s
+12 syncFrequency: 1m0s
+13 topologyManagerPolicy: none
+14 volumeStatsAggPeriod: 1m0s
+
+#Other agents on the master node interact with the kube-apiserver. View the configuration files where these settings are made. This was set in the previous YAML file. Look at one of the files for cert information.
+
+$ sudo ls /etc/kubernetes/manifests/
+$ sudo less /etc/kubernetes/manifests/kube-controller-manager.yaml
+
+#The use of tokens has become central to authorizing component communication. The tokens are kept as secrets. Take a look at the current secrets in the kube-system namespace. The certificate-controller-token could be one tolook at. 
+
+$ kubectl -n kube-system get secrets
+$ kubectl -n kube-system get secrets certificate<Tab> -o yaml
+
+1 apiVersion: v1
+2 data:
+3 ca.crt: LS0tLS1CRUdJTi.....
+4 namespace: a3ViZS1zeXN0ZW0=
+5 token: ZXlKaGJHY2lPaUpTVXpJM....
+6 kind: Secret
+7 metadata:
+8 annotations:
+9 kubernetes.io/service-account.name: certificate-controller
+10 kubernetes.io/service-account.uid: 7dfa2aa0-9376-11e8-8cfb
+11 -42010a800002
+12 creationTimestamp: 2018-07-29T21:29:36Z
+13 name: certificate-controller-token-wnrwh
+14 namespace: kube-system
+15 resourceVersion: "196"
+16 selfLink: /api/v1/namespaces/kube-system/secrets/certificate17 controller-token-wnrwh
+18 uid: 7dfbb237-9376-11e8-8cfb-42010a800002
+19 type: kubernetes.io/service-account-token
+
+#The kubectl config command can also be used to view and update parameters. When making updates this could avoid a typo removing access to the cluster. View the current configuration settings. The keys and certs are redacted from the
+output automatically.
+
+$ kubectl config view
+
+#View the options, such as setting a password for the admin instead of a key
+$ kubectl config set-credentials -h
+
+#Explore working with cluster and security configurations both using kubectl and kubeadm. Among other values, find the name of your cluster. You will need to become root to work with kubeadm.
+
+$ kubectl config <Tab><Tab>
+$ sudo kubeadm token -h
+$ sudo kubeadm config -h
+
+# Review the cluster default configuration settings. There may be some interesting tidbits to the security and infrastructure of the cluster.
+
+$ sudo kubeadm config print init-defaults

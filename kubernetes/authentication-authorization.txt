@@ -1,0 +1,100 @@
+#Kubernetes clusters have two types of users service accounts and normal users, but normal users are assumed to be managed by an outside service. There are no objects to represent them and they cannot be added via an API call, but service accounts can be added.
+
+#View the current clusters and context available. The context allows you to configure the cluster to use, namespace and user for kubectl commands in an easy and consistent manner.
+
+$ kubectl config get-contexts
+
+#create new user with password
+
+$ sudo useradd -s /bin/bash DevDan
+$ sudo passwd DevDan
+
+# Generate a private key then Certificate Signing Request (CSR)
+
+$ openssl genrsa -out DevDan.key 2048
+$ touch ˜/.rnd
+$ openssl req -new -key DevDan.key -out DevDan.csr -subj "/CN=DevDan/O=development"
+
+#Using thew newly created request generate a self-signed certificate using the x509 protocol. Use the CA keys for the Kubernetes cluster and set a 45 day expiration. 
+
+$ sudo openssl x509 -req -in DevDan.csr \
+-CA /etc/kubernetes/pki/ca.crt \
+-CAkey /etc/kubernetes/pki/ca.key \
+-CAcreateserial \
+-out DevDan.crt -days 45
+
+# Update the access config file to reference the new key and certificate. Normally we would move them to a safe directory instead of a non-root user’s home
+
+$ kubectl config set-credentials DevDan \
+--client-certificate=/home/student/DevDan.crt \
+--client-key=/home/student/DevDan.key
+
+#View the update to your credentials file
+
+$ diff cluster-api-config .kube/config
+
+# create a context. For this we will need the name of the cluster, namespace and CN of the user we set or saw in previous steps
+
+$ kubectl config set-context DevDan-context \
+--cluster=kubernetes \
+--namespace=development \
+--user=DevDan
+
+# YAML file to associate RBAC rights
+
+1 kind: Role
+2 apiVersion: rbac.authorization.k8s.io/v1
+3 metadata:
+4 namespace: development
+5 name: developer
+6 rules:
+7 - apiGroups: ["", "extensions", "apps"]
+8 resources: ["deployments", "replicasets", "pods"]
+9 verbs: ["list", "get", "watch", "create", "update", "patch", "delete"]
+10 # You can use ["*"] for all verbs
+
+$ kubectl create -f role-dev.yaml
+
+# create a RoleBinding to associate the Role we just created with a user
+
+1 kind: RoleBinding
+2 apiVersion: rbac.authorization.k8s.io/v1
+3 metadata:
+4 name: developer-role-binding
+5 namespace: development
+6 subjects:
+7 - kind: User
+8 name: DevDan
+9 apiGroup: ""
+10 roleRef:
+11 kind: Role
+12 name: developer
+13 apiGroup: ""
+
+$ kubectl create -f rolebind.yaml
+
+# new role 
+1 kind: Role
+2 apiVersion: rbac.authorization.k8s.io/v1
+3 metadata:
+4 namespace: production #<<- This line
+5 name: dev-prod #<<- and this line
+6 rules:
+7 - apiGroups: ["", "extensions", "apps"]
+8 resources: ["deployments", "replicasets", "pods"]
+9 verbs: ["get", "list", "watch"] #<<- and this one
+
+
+kind: RoleBinding
+2 apiVersion: rbac.authorization.k8s.io/v1
+3 metadata:
+4 name: production-role-binding #<-- Edit to production
+5 namespace: production #<-- Also here
+6 subjects:
+7 - kind: User
+8 name: DevDan
+9 apiGroup: ""
+10 roleRef:
+11 kind: Role
+12 name: dev-prod #<-- Also this
+13 apiGroup: ""

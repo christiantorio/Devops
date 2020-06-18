@@ -25,7 +25,7 @@ spec:
 #The taints having to do with schedules will be used to determine newly deployed
 containers, but will not affect running containers. The use of NoExecute will cause running containers to move. Taint the secondary node, verify it has the taint then create the deployment again. We will use the key of bubba to illustrate the key name is just some string an admin can use to track Pods.
 
-$ kubectl taint nodes lfs458-worker bubba=value:PreferNoSchedule
+$ kubectl taint nodes ip-172-31-14-194 bubba=value:PreferNoSchedule
 $ kubectl describe node |grep Taint
 
 #removing taint. Note that the key is used with a minus sign appended to the end

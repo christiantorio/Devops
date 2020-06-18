@@ -1,0 +1,27 @@
+#The metrics-server is written to interact with Docker. If you chose to use crio the logs will show errors and inability to collect metrics
+
+$ git clone https://github.com/kubernetes-incubator/metrics-server.git
+
+#create objects 
+
+$ kubectl create -f metrics-server/deploy/kubernetes/
+
+#make mods to deployment if needed
+
+$ kubectl -n kube-system edit deployment metrics-server
+
+#test metrics server pod is running and no errors
+
+$ kubectl -n kube-system logs metrics-server<TAB>
+
+#test metrics is working 
+
+$ kubectl top pod --all-namespaces
+$ kubectl top nodes
+
+# Using keys we generated in an earlier lab we can also interrogate the API server
+
+$ curl --cert ./client.pem \
+--key ./client-key.pem --cacert ./ca.pem \
+https://k8smaster:6443/apis/metrics.k8s.io/v1beta1/nodes
+

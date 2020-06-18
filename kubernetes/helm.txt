@@ -1,0 +1,35 @@
+#elmallows for easy deployment of complex configurations.  This could be handy for a vendor to deploy a multi-partapplication in a single step.  Through the use of aChart, or template file, the required components and their relation-ships are declared. Local agents likeTilleruse the API to create objects on your behalf. Effectively its orchestration fororchestration.
+
+#on master node, down load file
+
+$ wget https://get.helm.sh/helm-v3.0.0-linux-amd64.tar.gz
+
+#uncompress and expand file
+
+$ tar -xvf helm-v3.0.0-linux-amd64.tar.gz
+
+#Copy thehelmbinary to the/usr/local/bin/directory, so it is usable via the shell search path
+
+$ sudo cp linux-amd64/helm /usr/local/bin/helm3
+
+#AChartis a collection of files to deploy an application.  There is a good starting repo available onhttps://github.com/kubernetes/charts/tree/master/stable, provided by vendors, or you can make your own. Search the currentChartsin  the  Helm  Hub  or  an  instance  of  Monocular  for  available  stable  databases.   Repos  change  often,  so  thefollowing output may be different from what you see
+
+$ helm3 search hub database
+
+
+#adding common repo
+
+$ helm3 repo add stable https://kubernetes-charts.storage.googleapis.com
+$ helm3 repo update
+
+
+#install maria db
+
+$ helm3 --debug install firstdb stable/mariadb --set master.persistence.enabled=false --set slave.persistence.enabled=false
+$ kubectl get secret --namespace default firstdb-mariadb \-o jsonpath="{.data.mariadb-root-password}" | base64 --decode
+
+#another container to act as client
+
+$ kubectl run firstdb-mariadb-client \--rm --tty -i --restart='Never'\--image  docker.io/bitnami/mariadb:10.3.22-debian-10-r27 \--namespace default --command -- bash
+
+

@@ -1,0 +1,117 @@
+#As the prompts may look similar you may want to change the terminal color or other characteristics to make it easier to keep them distinct. You can also change the prompt using something like:PS1=”ha-proxy$ ”, which may help to keep the terminalsdistinct.
+
+1.  Deploy a load balancer configured to pass through traffic. HAProxy is easy to deploy. Start with just the working master.
+2.  Install the Kubernetes software on the second and third master.
+3.  Join the second master to the cluster using the node name. You will need an additional hash and flag from thekubeadmjoinyou used to add a worker node.
+4.  Join the third master to the cluster using the node name.
+5.  Update the proxy to use all three masters
+6.  Temporarily shut down the first master and monitor traffic
+
+#Deploy HAProxy.  Log into the proxy node.  Update the repos then install a the HAProxy software.  Answer yes, should you the installation ask if you will allow services to restart
+
+$ sudo apt-get update ; sudo apt-get install -y haproxy vim
+
+#edit config file and add sections for front-end and back-end
+
+$ sudo vim /etc/haproxy/haproxy.cfg
+
+....
+defaults
+    log global            #<-- Edit these three lines, starting around line 23
+    option tcplog
+    mode tcp
+....
+    errorfile 503 /etc/haproxy/errors/503.http
+    errorfile 504 /etc/haproxy/errors/504.http
+frontend proxynode          #<-- Add the following lines to bottom of file
+    bind *:80
+    bind *:6443
+    stats uri /proxystats
+    default_backend k8sServers
+
+backend k8sServers
+    balance roundrobin
+    server lfs458-node-1a0a  10.128.0.24:6443 check  #<-- Edit these with your IP addresses, port, and hostname
+#   server lfs458-SecondMaster  10.128.0.30:6443 check  #<-- Comment out until ready
+#   server lfs458-ThirdMaster  10.128.0.66:6443 check   #<-- Comment out until ready
+listen stats
+    bind :9999
+    mode http
+    stats enable
+    stats hide-version
+    stats uri /stats
+
+# Restart thehaproxyservice and check the status.   You should see the frontend and backend proxies report beingstarted
+
+$ sudo systemctl restart haproxy.service
+$ sudo systemctl status haproxy.service
+
+# On the masterEdit the/etc/hostsfile and comment out the old and add a new k8smaster alias to the IP address ofthe proxy server.
+
+$ sudo vim /etc/hosts
+
+10.128.0.64 k8smaster     #<-- Add alias to proxy IP
+#10.128.0.24 k8smaster    #<-- Comment out the old alias, in case its needed
+127.0.0.1 localhost
+....
+
+# add two more control planes with stackedetcddatabases for cluster quorum.  You may want to open up two morePuTTY or SSH sessions and color code the terminals to keep track of the nodes
+
+# Initialize the second master before adding the third master
+
+# Configure and install the kubernetes software on the second master. 
+
+$ sudo -i
+$ apt-get update && apt-get upgrade -y
+$ apt-get install -y vim
+$ apt-get install -y docker.io
+
+# Join master nodes by editing hosts file on all nodes. ensures alias of k8smaster is set on each node to proxy IP address
+
+$ sudo vim /etc/host
+
+10.128.0.64 k8smaster
+#10.128.0.24 k8smaster
+127.0.0.1 localhost
+....
+
+# On thefirst mastercreate the tokens and hashes necessary to join the cluster.  These commands may be in yourhistoryand easier to copy and paste.
+
+$ sudo kubeadm token create
+
+# create new SSL hash
+
+$ openssl x509 -pubkey -in /etc/kubernetes/pki/ca.crt | openssl rsa -pubin -outform der 2>/dev/null | openssl dgst -sha256 -hex | sed's/ˆ.* //'
+
+# create new master cert to join as master instead of as worker
+
+$ sudo kubeadm init phase upload-certs --upload-certs
+
+#  On the second master use the previous output to build akubeadm join command. This can be used for the other master nodes
+
+$ sudo kubeadm join k8smaster:6443 \--token jasg79.fdh4p279l320cz1g \--discovery-token-ca-cert-hash sha256:f62bf97d4fba6876e4c3ff645df3fca969c06169dee3865aab9d0bca8ec9f8cd \--control-plane --certificate-key \5610b6f73593049acddee6b59994360aa4441be0c0d9277c76705d129ba18d65
+
+#copy over config files as suggested in output of join command. this is done on other master nodes
+
+$ mkdir -p $HOME/.kube
+$ sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
+$ sudo chown $(id -u):$(id -g) $HOME/.kube/config
+
+# Edit the proxy to include all three master nodes then restart the proxy.
+
+$ sudo vim /etc/haproxy/haproxy.cfg
+
+....
+    backend k8sServers
+        balance roundrobin
+        server lfs458-node-1a0a  10.128.0.24:6443 check
+        server lfs458-SecondMaster  10.128.0.30:6443 check  #<-- Edit/Uncomment these lines
+        server lfs458-ThirdMaster  10.128.0.66:6443 check  #<--
+....
+
+$ sudo systemctl restart haproxy.service
+
+# View the logs of the newestetcdpod.  Leave it running, using the-foption in one terminal while running the followingcommands in a different terminal. As you have copied over the cluster admin file you can runkubectlon any master.
+
+$ kubectl -n kube-system get pods |grep etcd
+$ kubectl -n kube-system logs -f etcd-lfs458-ThirdMaster
